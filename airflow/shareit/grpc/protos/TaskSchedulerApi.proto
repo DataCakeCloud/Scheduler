@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+import "entity/ScheduleJob.proto";
+option java_package = "com.ushareit.dstask.api";
+option java_outer_classname = "TaskSchedulerApi";
+
+service TaskSchedulerRpcApi{
+    //获取render信息
+    rpc getTaskRenderInfo(RenderRequest) returns (TaskCommonResponse);
+
+    //日期转换
+    rpc dateTransform(DateTransformRequest) returns (TaskCommonResponse);
+
+    //获取数据集信息
+    rpc datasetInfo(DataInfoRequest) returns (TaskCommonResponse);
+
+    //日期预览
+    rpc datePreview(DatePreviewRequest) returns (TaskCommonResponse);
+
+    //设置success
+    rpc setSuccess(StateSetRequest) returns (TaskCommonResponse);
+
+    //设置failed
+    rpc setFail(StateSetRequest) returns (TaskCommonResponse);
+
+    //clear
+    rpc clear(ClearTaskRequest) returns (TaskCommonResponse);
+
+    //clear
+    rpc getDagRunLatest(DagRunLatestRequest) returns (TaskCommonResponse);
+
+    //获取关联任务信息
+    rpc getTaskDiagnose(DiagnoseParamRequest) returns (TaskCommonResponse);
+
+    //删除任务
+    rpc taskDelete(DeleteTaskRequest) returns (TaskCommonResponse);
+
+    //更新任务名称
+    rpc taskUpdatename(UpdateTaskNameRequest) returns (TaskCommonResponse);
+
+    //获取日志url
+    rpc getLogUrl(GetLogRequest) returns (TaskCommonResponse);
+
+    //补数
+    rpc taskBackfill(BackFillRequest) returns (TaskCommonResponse);
+
+    //补数行为记录
+    rpc progressReminder(UserActionRequest) returns (TaskCommonResponse);
+
+    //获取实例血缘
+    rpc getInstanceRelation(DataRelationRequest) returns (TaskCommonResponse);
+
+    //停止任务
+    rpc pauseTask(PausedParamRequest) returns (TaskCommonResponse);
+
+    //获取last7状态
+    rpc getLast7Status(Last7StatusRquest) returns (TaskCommonResponse);
+
+    //更新任务
+    rpc updateTask(UpdateParamRequest) returns (TaskCommonResponse);
+
+    //page
+    rpc PageListInfo(PageListInfoRequest) returns (TaskCommonResponse);
+
+    //更新并执行任务
+    rpc updateAndExec(UpdateAndExecRequest) returns (TaskCommonResponse);
+
+    rpc fastBackfill(fastBackfillRequest) returns (TaskCommonResponse);
+
+    rpc batchClear(BatchHandleRequest) returns (TaskCommonResponse);
+
+    rpc batchSetSuccess(BatchHandleRequest) returns(TaskCommonResponse);
+
+    rpc batchSetFailed(BatchHandleRequest) returns(TaskCommonResponse);
+}
+
+message Handle{
+    string name = 1;
+    string executionDate = 2;
+    optional bool isCheckUpstream = 3;
+}
+
+message BatchHandleRequest{
+    repeated Handle batches = 1;
+}
+
+message TaskCommonResponse {
+    int32 code = 1;
+    string message = 2;
+    string data = 3;
+}
+
+//mapParam公共参数
+message MapParamRequest {
+    map<string,string> eventParams = 1;
+}
+
+message UpdateTaskNameRequest{
+    string newName = 1;
+    string oldName = 2;
+}
+
+// 获取render信息
+message RenderRequest {
+    optional string taskName = 1;
+    string executionDate = 2;
+    string content = 3;
+
+}
+
+message DagRunLatestRequest{
+    string names = 1;
+}
+
+//日期转换
+message DateTransformRequest {
+    string airflowContent = 1;
+    bool isDataTrigger = 2;
+    string airflowCrontab = 3;
+    string taskGra = 4;
+    bool isSql = 5;
+}
+
+//获取dataInfo
+message DataInfoRequest{
+    string name = 1;
+}
+
+message DiagnoseParamRequest{
+    string name = 1;
+    string executionDate = 2;
+    string state = 3;
+}
+
+//日期预览
+message DatePreviewRequest{
+    string taskGra = 1;
+    string taskCrontab = 2;
+    string dataDepend = 3;
+    string taskDepend = 4;
+}
+
+//任务标记成功失败
+message StateSetRequest{
+    string name = 1;
+    string executionDate = 2;
+}
+
+//停止任务
+message PausedParamRequest{
+    string name = 1;
+    bool isOnline = 2;
+}
+
+//clear任务
+message ClearTaskRequest{
+    string taskName = 1;
+    string executionDate = 2;
+    bool isCheckUpstream = 3;
+}
+
+//更新任务
+message UpdateParamRequest{
+    ScheduleJob scheduleJob = 1;
+}
+
+//更新任务并执行
+message UpdateAndExecRequest{
+    ScheduleJob scheduleJob = 1;
+    int32 id = 2;
+    string callbackUrl = 3;
+    string args = 4;
+}
+
+message GetLogRequest{
+    string name = 1;
+    string executionDate = 2;
+}
+
+message Last7StatusRquest{
+    string names = 1;
+}
+
+message DeleteTaskRequest{
+    string name = 1;
+}
+
+//数据血缘
+message DataRelationRequest{
+    string coreTask = 1;
+    string executionDate = 2;
+    int32 level = 3;
+    bool isDownstream = 4;
+}
+
+message BackFillRequest{
+    optional string names = 1;
+    string coreTaskName = 2;
+    string operator = 3;
+    string startDate = 4;
+    string endDate = 5;
+    bool isSendNotify = 6;
+    bool isCheckDependency = 7;
+    string ids = 8;
+    optional string label = 9;
+}
+
+message UserActionRequest{
+    int32 userActionId = 1;
+}
+
+message PageListInfoRequest{
+    string name = 1;
+    int32 page = 2;
+    int32 size = 3;
+    optional string state = 4;
+    optional string startDate = 5;
+    optional string endDate = 6;
+}
+
+message fastBackfillRequest {
+    string taskName = 1;
+    int32 taskId = 2;
+    optional string callbackUrl = 3;
+    optional string args = 4;
+    optional string startDate = 5;
+    optional string endDate = 6;
+}

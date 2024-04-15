@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ds-pipeline-webserver
+  namespace: bdp-ds-pipeline-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ds-pipeline-webserver
+  template:
+    metadata:
+      annotations:
+        kubernetes.io/psp: eks.privileged
+      labels:
+        name: ds-pipeline-webserver
+    spec:
+      nodeSelector:
+        usage: "ds-pipeline"
+      tolerations:
+        - key: "usage"
+          operator: "Equal"
+          value: "ds-pipeline"
+      containers:
+      - name: webserver
+        # image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-business:1.10.7rc1_centos_k8s_etl_3
+        image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-environment:pipeline3.0.379
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: webserver
+          containerPort: 8080
+        command: ["airflow"]
+        args: ["webserver"]
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "4"
+            memory: 4Gi
+        env:
+        - name: AIRFLOW_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: ds-pipeline-secret
+              key: sql_alchemy_conn
+        volumeMounts:
+        - name: airflow-configmap
+          mountPath: /work/airflow/airflow.cfg
+          subPath: airflow.cfg
+        - name: rbac-configmap
+          mountPath: /work/airflow/webserver_config.py
+          subPath: webserver_config.py
+        - name: ldap-configmap
+          mountPath: /etc/ldap/ldap.conf
+          subPath: ldap.conf
+        - name: ds-pipeline-test-logs
+          mountPath: /work/airflow/logs
+      volumes:
+      - name: ds-pipeline-test-logs
+        persistentVolumeClaim:
+          claimName: ds-pipeline-test-logs
+      - name: airflow-dags-fake
+        emptyDir: {}
+      - name: airflow-dags-git
+        emptyDir: {}
+      - name: airflow-configmap
+        configMap:
+          name: airflow-configmap
+      - name: rbac-configmap
+        configMap:
+          name: rbac-configmap
+      - name: ldap-configmap
+        configMap:
+          name: ldap-configmap
+      serviceAccount: ds-pipeline-big-authority-sa
+      serviceAccountName: ds-pipeline-big-authority-sa

@@ -1,0 +1,96 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: bdp-airflow
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: airflow-scheduler
+    spec:
+      nodeSelector:
+        usage: "airflow"
+      tolerations:
+        - key: "usage"
+          operator: "Equal"
+          value: "airflow"
+          effect: "NoExecute"
+#      initContainers:
+#      - name: "init"
+#        image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-business:1586263021
+#        imagePullPolicy: IfNotPresent
+#        volumeMounts:
+#        - name: airflow-configmap
+#          mountPath: /root/airflow/airflow.cfg
+#          subPath: airflow.cfg
+#        - name: airflow-dags
+#          mountPath: /root/airflow/dags/deployedDags
+#        - name: airflow-logs
+#          mountPath: /root/test_volume
+#        env:
+#        - name: SQL_ALCHEMY_CONN
+#          valueFrom:
+#            secretKeyRef:
+#              name: airflow-secrets
+#              key: sql_alchemy_conn
+#        command:
+#          - "bash"
+#        args:
+#          - "-cx"
+#          - "/tmp/airflow-test-env-init.sh"
+      containers:
+      - name: scheduler
+        image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-business:1.10.10_prod_16
+        imagePullPolicy: IfNotPresent
+        command: ["/tini"]
+        args: ["-s","--","airflow","scheduler"]
+        resources:
+          limits:
+            cpu: "6"
+            memory: 4Gi
+          requests:
+            cpu: "6"
+            memory: 4Gi
+        env:
+        - name: AIRFLOW_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: sql_alchemy_conn
+        volumeMounts:
+        - name: airflow-configmap
+          mountPath: /work/airflow/airflow.cfg
+          subPath: airflow.cfg
+        - name: airflow-dags
+          mountPath: /work/airflow/dags
+        - name: airflow-logs
+          mountPath: /work/airflow/logs
+        - name: workflow-configmap
+          mountPath: /work/airflow/conf/workflow.cfg
+          subPath: workflow.cfg
+      volumes:
+      - name: airflow-dags
+        persistentVolumeClaim:
+          claimName: airflow-dags
+      - name: airflow-logs
+        persistentVolumeClaim:
+          claimName: airflow-logs
+      - name: airflow-dags-fake
+        emptyDir: {}
+      - name: airflow-dags-git
+        emptyDir: {}
+      - name: airflow-configmap
+        configMap:
+          name: airflow-configmap
+      - name: workflow-configmap
+        configMap:
+          name: workflow-configmap
+      serviceAccount: airflow-sa
+      serviceAccountName: airflow-sa 

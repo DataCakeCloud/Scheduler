@@ -1,0 +1,133 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+option java_package = "com.ushareit.dstask.entity";
+
+message ScheduleJob {
+  // 任务ID
+  int32 taskId = 1;
+
+  // 任务名
+  string taskName = 2;
+
+  // 任务配置详情
+  TaskCode taskCode = 3;
+}
+
+message TaskCode {
+  // 任务名
+  string name = 1;
+  // 邮件
+  string emails = 2;
+  string owner = 3;
+  // 重试次数
+  int32 retries = 4;
+  // 任务并行的
+  int32 maxActiveRuns = 5 [json_name="max_active_runs"];
+  // 成功报警
+  bool emailOnSuccess = 6 [json_name="email_on_success"];
+  // 失败报警
+  bool emailOnFailure = 7 [json_name="email_on_failure"];
+  // 启动报警
+  bool emailOnStart = 8 [json_name="email_on_start"];
+  // 前置依赖-外部依赖数据集
+  repeated Dataset inputDatasets = 9 [json_name="input_datasets"];
+  // 产出数据集
+  repeated Dataset outputDatasets = 10 [json_name="output_datasets"];
+  // 限制任务开始日期
+  string startDate = 11 [json_name="start_date"];
+  // 限制任务结束日期
+  string endDate = 12 [json_name="end_date"];
+  // 任务超时时间(秒)
+  int32 executionTimeout = 13 [json_name="execution_timeout"];
+  // 额外参数
+  string extraParam = 14 [json_name="extra_params"];
+  // 前置依赖-内部依赖
+  repeated EventDepend eventDepend = 15 [json_name="event_depend"];
+  // 调度触发参数
+  optional TriggerParam triggerParam = 16 [json_name="trigger_param"];
+  // 依赖类型, datasets,event
+  string dependTypes = 17 [json_name="depend_types"];
+  // 版本
+  int32  version = 18;
+  // 子任务
+  string taskItems = 19 [json_name="task_items"];
+
+  string notifiedOwner = 20 [json_name="notified_owner"];
+
+  // 重试报警
+  bool emailOnRetry= 21 [json_name="email_on_retry"];
+
+  string userGroupInfo = 22 [json_name="user_group_info"];
+
+  string templateCode = 23 [json_name="template_code"];
+
+  int32 retryInterval = 24 [json_name="retry_interval"];
+    // 检查上游超时时间
+  optional int32 checkExpirationTime = 25 [json_name="check_expiration_time"];
+
+  bool dynamicsCmd = 26 [json_name="dynamics_cmd"];
+}
+
+message Dataset {
+  // 数据集id
+  string id = 1;
+  // 数据集周期
+  optional string granularity = 2;
+  // 偏移量
+  optional int32 offset = 3;
+  // 完成时间
+  optional string readyTime = 4 [json_name="ready_time"];
+  // 生成success文件的路径
+  optional string location = 5;
+  // 生成success文件的文件名
+  optional string fileName = 7;
+  // 检查路径
+  optional string checkPath = 8 [json_name="check_path"];
+  // 是否使用依赖设置中的高级设置
+  optional bool useDateCalcuParam = 11 [json_name="use_date_calcu_param"];
+  // 新偏移量
+  optional string unitOffset = 12;
+  // 偏移量设置的-高级设置
+  optional DataCaculationParam dataCaculationParam = 13 [json_name="date_calculation_param"];
+}
+
+// 内部依赖(任务依赖/事件依赖)
+message EventDepend{
+  // 依赖的任务id
+  string taskId = 2 [json_name="task_id"];
+  // 依赖的任务名
+  string dependId = 3 [json_name="depend_id"];
+  // 依赖的任务的周期
+  string granularity = 5;
+  // 是否使用依赖设置中的高级设置
+  bool useDateCalcuParam = 6 [json_name="use_date_calcu_param"];
+  // 偏移量
+  optional string unitOffset = 7;
+  // 偏移量设置的-高级设置
+  optional DataCaculationParam dateCalculationParam = 8 [json_name="date_calculation_param"];
+}
+
+message TriggerParam{
+  // 触发类型: cron,data
+  string type = 1;
+  // 调度周期: monthly,weekly,daily,hourly,minutely
+  string ouputGranularity = 2 [json_name="output_granularity"];
+  // crontab表达式
+  string crontab = 3;
+  // 是否为不定时调度任务
+  int32 isIrregularSheduler = 4 [json_name="is_irregular_sheduler"];
+
+}
+
+message DataCaculationParam {
+  message DateUnitParam{
+    // 类型 offse,range
+    string type = 1;
+    string unitOffset = 2;
+    repeated string range = 3;
+  }
+  optional DateUnitParam month = 1;
+  optional DateUnitParam week = 2;
+  optional DateUnitParam day = 3;
+  optional DateUnitParam hour = 4;
+}

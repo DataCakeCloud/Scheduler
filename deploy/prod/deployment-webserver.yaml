@@ -1,0 +1,139 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  namespace: bdp-airflow
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        name: airflow-webserver
+    spec:
+      nodeSelector:
+        usage: "airflow"
+      tolerations:
+        - key: "usage"
+          operator: "Equal"
+          value: "airflow"
+          effect: "NoExecute"
+#      initContainers:
+#      - name: "init"
+#        image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-business:1586263021
+#        imagePullPolicy: IfNotPresent
+#        resources:
+#          limits:
+#            cpu: "2"
+#            memory: 4G
+#          requests:
+#            cpu: "1"
+#            memory: 2G
+#        volumeMounts:
+#        - name: airflow-configmap
+#          mountPath: /root/airflow/airflow.cfg
+#          subPath: airflow.cfg
+#        - name: airflow-dags
+#          mountPath: /root/airflow/dags/deployedDags
+#        env:
+#        - name: SQL_ALCHEMY_CONN
+#          valueFrom:
+#            secretKeyRef:
+#              name: airflow-secrets
+#              key: sql_alchemy_conn
+#        command:
+#          - "bash"
+#        args:
+#          - "-cx"
+#          - "/tmp/airflow-test-env-init.sh"
+
+      containers:
+      - name: webserver
+        # image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-business:1.10.7rc1_centos_1
+        image: 848318613114.dkr.ecr.us-east-1.amazonaws.com/shareit-bdp/airflow-environment-plugins:1.10.10_prod_16_1
+        resources:
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: webserver
+          containerPort: 8080
+        command: ["airflow"]
+        args: ["webserver"]
+        resources:
+          limits:
+            cpu: "1"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 4Gi
+        env:
+        - name: AIRFLOW_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: sql_alchemy_conn
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 100
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 100
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+        volumeMounts:
+        - name: airflow-configmap
+          mountPath: /work/airflow/airflow.cfg
+          subPath: airflow.cfg
+        - name: plugin-genie-info                                       
+          mountPath: /work/airflow/plugins/onlineEditing/dag_templates/genie_info                                                                     
+          subPath: genie_info
+        - name: rbac-configmap
+          mountPath: /work/airflow/webserver_config.py
+          subPath: webserver_config.py
+        - name: ldap-configmap
+          mountPath: /etc/ldap/ldap.conf
+          subPath: ldap.conf
+        - name: airflow-dags
+          mountPath: /work/airflow/dags
+        - name: airflow-logs
+          mountPath: /work/airflow/logs
+      volumes:
+      - name: airflow-dags
+        persistentVolumeClaim:
+          claimName: airflow-dags
+      - name: airflow-logs
+        persistentVolumeClaim:
+          claimName: airflow-logs
+      - name: airflow-dags-fake
+        emptyDir: {}
+      - name: airflow-dags-git
+        emptyDir: {}
+      - name: airflow-configmap
+        configMap:
+          name: airflow-configmap
+      - name: rbac-configmap
+        configMap:
+          name: rbac-configmap
+      - name: ldap-configmap
+        configMap:
+          name: ldap-configmap
+      - name: plugin-genie-info
+        configMap:
+          name: plugin-genie-info
+      serviceAccount: airflow-sa
+      serviceAccountName: airflow-sa

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option java_package = "com.ushareit.dstask.entity";
+
+message CommonResponse {
+  // 0 成功 其他-失败
+  int32 code = 1;
+
+  // 失败原因
+  string message = 2;
+}

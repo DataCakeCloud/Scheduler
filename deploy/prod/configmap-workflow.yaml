@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-configmap
+  namespace: bdp-airflow
+data:
+  # yamllint disable rule:line-length
+  workflow.cfg: |
+    # -*- coding: utf-8 -*-
+
+    [core]
+    env = prod
+  # yamllint enable rule:line-length

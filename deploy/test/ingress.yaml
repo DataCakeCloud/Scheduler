@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  generation: 1
+  labels:
+    app: ds-pipeline
+  name: ds-pipeline
+  namespace: bdp-ds-pipeline-test
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:848318613114:certificate/06360e84-3496-4d4a-b82a-b895490f94ad
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_3
+    01"}}'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/security-groups: sg-02d42f230a2c931ba,sg-0393ecbe363739766,sg-0a7d0fc101b7fc806,sg-0b63c162899dcd2b4,sg-0c0d1dea3b6def821
+    alb.ingress.kubernetes.io/tags: sgt:env=test,sgt:group=BDP,sgt:project=k8s-ds-pipeline
+    alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+spec:
+  rules:
+    - host: ds-pipeline-test.ushareit.org
+      http:
+        paths:
+          - backend:
+              serviceName: ds-pipeline
+              servicePort: 80
+            path: /*
+

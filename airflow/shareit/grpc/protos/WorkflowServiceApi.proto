@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+import "entity/ScheduleJob.proto";
+import "entity/UserInfo.proto";
+import "entity/CommonResponse.proto";
+
+option java_package = "com.ushareit.dstask.api.workflow";
+option java_outer_classname = "WorkflowServiceApi";
+
+service WorkflowRpcService {
+
+  // 工作流上线
+  rpc online(OnlineRequest) returns (CommonResponse) {
+  }
+
+  // 工作流下线
+  rpc offline(OfflineRequest) returns (CommonResponse) {
+  }
+
+  // 调试任务
+  rpc debugTask(DebugTaskRequest) returns (CommonResponse) {
+  }
+
+  // 删除工作流
+  rpc deleteWorkflow(DeleteWorkflowRequest) returns (CommonResponse) {
+  }
+
+  // 关闭调试任务
+  rpc stopTask(StopTaskRequest) returns (CommonResponse) {
+  }
+
+}
+
+message OnlineRequest {
+  // 工作流ID
+  int32 workflowId = 1;
+
+  // 工作流版本
+  optional int32 version = 2;
+
+  // 任务配置详情
+  repeated ScheduleJob jobs = 3;
+
+  // 工作流名称
+  string workflowName = 4;
+
+  // 工作流周期 monthly,weekly,daily,hourly,minutely
+  string granularity = 5;
+
+  // crontab
+  string crontab = 6;
+
+  //用户信息
+  UserInfo userInfo = 7;
+}
+
+message OfflineRequest {
+  // 工作流ID
+  int32 workflowId = 1;
+
+  //用户信息
+  UserInfo userInfo = 2;
+}
+
+message DebugTaskRequest {
+  // 用户名
+  string userName = 1;
+
+  // 会话ID
+  string chatId = 2;
+
+  // 任务配置详情
+  repeated ScheduleJob scheduleJob = 3;
+
+  //用户信息
+  UserInfo userInfo = 4;
+}
+
+message StopTaskRequest {
+  // 用户名
+  string userName = 1;
+
+  // 会话ID
+  string chatId = 2;
+
+  // 任务ID
+  repeated int32 taskId = 3;
+
+  //用户信息
+  UserInfo userInfo = 4;
+}
+
+message DeleteWorkflowRequest {
+  // 工作流ID
+  int32 workflowId = 1;
+
+  //用户信息
+  UserInfo userInfo = 2;
+}

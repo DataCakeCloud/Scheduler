@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+import "entity/ScheduleJob.proto";
+option java_package = "com.ushareit.dstask.api";
+option java_outer_classname = "TaskServiceApi";
+
+service TaskRpcService {
+
+  rpc getTaskInfoByName(NameRequest) returns (Response) {
+  }
+
+  rpc getTaskInfoByID(IDRequest) returns (TaskResponse) {
+  }
+
+}
+
+message IDRequest {
+  repeated IdVersionPair idVersionPair = 1;
+}
+
+message NameRequest {
+  string taskName = 1;
+}
+
+message Response {
+
+  // 0 成功 其他-失败
+  int32 code = 1;
+  string message = 2;
+  TaskInfo info = 3;
+}
+
+message TaskResponse {
+  // 0 成功 其他-失败
+  int32 code = 1;
+  string message = 2;
+  repeated TaskInfo info = 3;
+}
+
+message IdVersionPair {
+  int32 taskID = 1;
+  optional int32 version = 2;
+}
+
+message TaskInfo {
+  int32 id = 1;
+  // sparkTask = 1, 否则 = 0
+  bool isSparkTask = 2;
+  string templateCode = 3;
+  // 任务的runtimeConfig
+  string runtimeConfig = 4;
+  // 任务的更新时间
+  int64 updateTime = 5 ;
+  // 任务owner
+  string owner = 6;
+  // 前置依赖信息
+  repeated EventDepend eventDepends = 7;
+  // 任务名
+  string name = 8;
+  // 是否删除的任务
+  bool isDelete = 9;
+}

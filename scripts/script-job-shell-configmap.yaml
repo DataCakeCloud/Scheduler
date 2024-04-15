@@ -1,0 +1,208 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: script-job-shell-configmap
+  namespace: datacake
+data:
+  # yamllint disable rule:line-length
+  script_job_shell.py: |
+    # -*- coding: utf-8 -*-
+    import os
+    import sys
+    import six
+    import boto3
+    import getopt
+    import subprocess
+    from gcloud import storage
+
+
+    def _prepare_command(command):
+        """
+        Construct the command to execute. Verbose output is enabled as default.
+
+        :param command: command to append to the spark-sql command
+        :type command: str or list[str]
+        :return: full command to be executed
+        """
+        connection_cmd = []
+        if isinstance(command, list):
+            connection_cmd += command
+        elif isinstance(command, six.string_types):
+            cmd_list = command.split(" ")
+            for param in cmd_list:
+                if param != "":
+                    connection_cmd.append(param.strip())
+        return connection_cmd
+
+
+    def download_file_from_gs(gspath=None, targetDir='.'):
+        bucket_name = gspath.split('/')[2]
+        key = gspath.split(bucket_name)[-1][1:]
+        if targetDir.endswith('/'):
+            fileName = targetDir + '/' + key.split('/')[-1]
+        else:
+            fileName = targetDir
+
+        try:
+            gcs = storage.Client()
+            bucket = gcs.bucket(bucket_name)
+            blob = bucket.blob(key)
+            blob.download_to_filename(fileName)
+
+            print(
+                "Downloaded storage object {} from bucket {} to local file {}.".format(
+                    key, bucket_name, fileName
+                )
+            )
+        except Exception as e:
+            raise e
+
+
+    def _format_input_path(input_path=None):
+        """
+        将http路径改为s3:// 或者obs：// 开头的形式
+        :param input_path:
+        :return:
+        """
+        if input_path is None or input_path == "":
+            return ""
+        input_path = input_path.strip()
+        if input_path.startswith("https://s3.amazonaws.com/"):
+            return input_path.replace("https://s3.amazonaws.com/", "s3://")
+
+        elif input_path.startswith("https://www.googleapis.com"):
+            return input_path.replace("https://www.googleapis.com/storage/v1/b/","gs://") \
+            .replace("/o/","/")
+
+        elif "http" in input_path:
+            if "amazonaws.com" in input_path:
+                tmp = input_path.split("?")[0].split("://")[1]
+                bucket = ".".join(tmp.split("/")[0].split(".")[0:-4])
+                key = "/".join(tmp.split("/")[1:])
+                return "s3://" + bucket + "/" + key
+            elif "myhuaweicloud.com" in input_path:
+                tmp = input_path.split("?")[0].split("://")[1]
+                bucket = ".".join(tmp.split("/")[0].split(".")[0:-4])
+                key = "/".join(tmp.split("/")[1:])
+                return "obs://" + bucket + "/" + key
+        elif input_path.startswith("obs://") or input_path.startswith("s3://") or input_path.startswith("s3a://") or input_path.startswith("gs://"):
+            return input_path
+        else:
+            raise ValueError("依赖路径有误: " + str(input_path))
+
+    def download_file_from_s3(s3path=None, targetDir='.'):
+        """
+        download file from s3
+        :param s3path: full path of file
+        :param targetDir: target path for download file
+        :return: download file path
+        """
+        bucket = s3path.split('/')[2]
+        key = s3path.split(bucket)[-1][1:]
+        if targetDir.endswith('/'):
+            fileName = targetDir + '/' + key.split('/')[-1]
+        else:
+            fileName = targetDir
+
+        try:
+            s3 = boto3.client("s3")
+            s3.download_file(bucket, key, fileName)
+            return fileName
+        except Exception as e:
+            raise e
+
+
+    def download_to_local(input_path, local_file=None):
+        """
+        download file
+        :param local_file:
+        :param input_path: s3 or obs path
+        :return:
+        """
+        if input_path is None or input_path == "":
+            return
+        if local_file is None:
+            local_file = "/work/"
+        if input_path.startswith("obs://"):
+            download_cmd = "obsutil config -i=$OBS_ACCESS_KEY_ID -k=$OBS_SECRET_ACCESS_KEY " \
+                        "-e=obs.ap-southeast-3.myhuaweicloud.com:443 " \
+                        "&& obsutil cp %s %s" % (input_path, local_file)
+        elif input_path.startswith("s3://") or input_path.startswith("s3a://"):
+            download_cmd = "aws s3 cp %s %s" % (input_path, local_file)
+        elif input_path.startswith("gs://"):
+            download_cmd = "gsutil cp %s %s" % (input_path, local_file)
+        else:
+            raise Exception("Not support file system(only support s3,s3a,obs) with path:%s" % input_path)
+        for i in range(3):
+            try:
+                if input_path.startswith("obs://"):
+                    exe_code = os.system(download_cmd)
+                    if exe_code != 0:
+                        raise Exception("download [%s] to local failed,exit %s" % (input_path, exe_code))
+                    if not os.path.isfile(local_file):
+                        raise Exception("download [%s] to local failed" % input_path)
+                elif input_path.startswith("s3://") or input_path.startswith("s3a://"):
+                    download_file_from_s3(input_path, local_file)
+                elif input_path.startswith("gs://"):
+                    download_file_from_gs(input_path, local_file)
+                print("[DataStudio]: download file [%s] success" % input_path)
+                return local_file
+            except Exception as e:
+                print("[DataStudio]: download file failed at %s time:%s" % (i, str(e)))
+        raise Exception("download [%s] to local failed" % input_path)
+
+
+    def run_script(script="", **kwargs):
+        cmd_list = _prepare_command(command=script)
+        _sp = subprocess.Popen(cmd_list,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            **kwargs)
+        print("[DataStudio] Execute < {script} >... ".format(script=script))
+        for line in iter(_sp.stdout.readline, b''):
+            print(line)
+            # logging.log.info(line)
+
+        return_code = _sp.wait()
+
+        if return_code:
+            raise ValueError(
+                "Cannot execute {} on {}. Process exit code: {}.".format(
+                    script, "test", return_code
+                )
+            )
+
+
+    if __name__ == "__main__":
+        # print('参数列表:', str(sys.argv))
+        try:
+            opts, args = getopt.getopt(
+                args=sys.argv[1:],
+                shortopts="hd:c:w:",
+                longopts=["dep=", "cmd=", "workdir="]
+            )
+        except Exception:
+            raise ValueError("仅支持以下参数: -d --dep[依赖文件]; -c --cmd [脚本命令]; -w --workdir[工作目录]")
+        print("opts: "+str(opts))
+        print("args: "+str(args))
+        dep_list = []
+        cmds_list = []
+        wd = None
+        for opt, arg in opts:
+            if opt in ("-d", "--dep"):
+                dep_list.append(arg)
+            if opt in ("-c", "--cmd"):
+                cmds_list.append(arg)
+            if opt in ("-w", "--workdir"):
+                wd = str(arg).strip()
+        wd = "/work/" if wd is None else wd
+        ab_path = os.getcwd()
+        # 下载依赖
+        for dep in dep_list:
+            path = _format_input_path(input_path=dep)
+            if path is not None and path != "":
+                file_name = path.split("/")[-1]
+                download_to_local(input_path=path, local_file=wd + "/" + file_name)
+        # 执行脚本
+        for cmd in cmds_list:
+            run_script(cmd)

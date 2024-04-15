@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  generation: 1
+  labels:
+    app: airflow
+  name: airflow
+  namespace: bdp-airflow
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443","StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/subnets: subnet-0547a008f10dd64a9,subnet-0b40609b759d7e297,subnet-0d336137835a4ee45
+    alb.ingress.kubernetes.io/security-groups: sg-01c3c7118bbc04b54,sg-0393ecbe363739766,sg-0a7d0fc101b7fc806,sg-0c0d1dea3b6def821,sg-04b736213a1d7d233
+    alb.ingress.kubernetes.io/tags: sgt:env=prod,sgt:group=BDP,sgt:project=k8s-airflow
+    alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=aws-logs-848318613114-us-east-1,access_logs.s3.prefix=alb/BDP/alb-bdp-airflow-prod
+spec:
+  rules:
+    - host: workflow.ushareit.org
+      http:
+        paths:
+          - backend:
+              serviceName: airflow
+              servicePort: 80
+            path: /*
+
+

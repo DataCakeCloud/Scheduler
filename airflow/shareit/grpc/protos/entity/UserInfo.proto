@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_package = "com.ushareit.dstask.entity";
+
+message UserInfo{
+   optional int32 id = 1;
+   optional string userId = 2;
+   optional string userName = 3;
+   optional string groupName = 4;
+   optional string group = 5;
+   optional string name = 6;
+   optional string email = 7;
+   optional string password = 8;
+   optional int32 tenantId = 9;
+   optional string token = 10;
+   optional string groupIds = 11;
+}

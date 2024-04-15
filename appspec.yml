@@ -1,0 +1,18 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /work/CodeDeploy-source/airflow-source
+hooks:
+  BeforeInstall:
+    - location: deploy/before_install.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: deploy/change_directory.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: install_source.sh
+      timeout: 300
+      runas: root

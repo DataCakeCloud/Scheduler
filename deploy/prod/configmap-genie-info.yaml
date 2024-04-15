@@ -1,0 +1,97 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugin-genie-info
+data:
+  # yamllint disable rule:line-length
+  genie_info: |
+    cluster_type:k8s
+    cluster_type:presto
+    cluster_type:yarn
+    command_type:beeline
+    command_type:beeline-image
+    command_type:hadoop
+    command_type:hadoop-image
+    command_type:hive
+    command_type:java
+    command_type:java-dqc
+    command_type:java-dqc-image
+    command_type:kubernetes-pod-operator
+    command_type:pod-monitor
+    command_type:presto
+    command_type:presto-image
+    command_type:psql
+    command_type:psql-image
+    command_type:redis
+    command_type:redis-image
+    command_type:s3-dist-cp
+    command_type:spark
+    command_type:spark-sql
+    command_type:spark-submit
+    command_type:spark-submit-image
+    command_type:spark-submit-python
+    command_type:spark-submit-python-image
+    command_type:spark-submit-sharestore
+    command_type:spark-submit-sharestore-image
+    command_type:spark-submit-sql
+    command_type:spark-submit-sql-image
+    command_type:spark-submit-xlwt
+    command_type:spark-submit-sql-backfill
+    command_type:spark-submit-3
+    cluster:ads-cce-prod-sg
+    cluster:ads-eks-bigdata-prod-sg
+    cluster:ads-eks-bigdata-prod-us
+    cluster:ads-eks-prod-us
+    cluster:ads-emr-prod-sg
+    cluster:bdp-cce2-prod-sg
+    cluster:bdp-cce-prod-sg
+    cluster:bdp-eks-bigdata-prod-us
+    cluster:bdp-mrs-test-sg
+    cluster:bdp-prod
+    cluster:bdp-prod2
+    cluster:bdp-test
+    cluster:cbs-cce-prod-sg
+    cluster:cbs-eks-prod-use1
+    cluster:cbs-prod
+    cluster:da-cce-prod-sg
+    cluster:da-eks-prod-us
+    cluster:da-emr-prod-us
+    cluster:im-eks-prod-us
+    cluster:im-emr-prod-mb
+    cluster:model-server-log-daily
+    cluster:prod
+    cluster:prod-sg
+    cluster:prod-us
+    cluster:sbos-cce-prod-sg
+    cluster:sbos-eks-prod-us
+    cluster:sbos-hive-presto-prod
+    cluster:sbos-mrs-prod-sg
+    cluster:scas-analysi-mrs-prod-sg
+    cluster:scas-cce-prod-sg
+    cluster:scas-streaming-mrs-prod-sg
+    cluster:sprs-cce2-prod-sg
+    cluster:sprs-cce-prod-sg
+    cluster:sprs-cce-prod-sg-virtual
+    cluster:sprs-cce-streaming-prod-sg
+    cluster:sprs-mrs2-prod-sg
+    cluster:sprs-mrs-prod-sg
+    cluster:ugs-abtest-emr-prod-us
+    cluster:ugs-cce-prod-sg
+    cluster:ugs-mrs-prod-sg
